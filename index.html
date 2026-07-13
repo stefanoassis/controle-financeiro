@@ -79,6 +79,18 @@
     font-size:0.85rem;
   }
 
+  .versao-badge{
+    display:inline-block;
+    margin-top:6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size:0.7rem;
+    font-weight:700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
   .gear-btn{
     background: var(--card);
     border:none;
@@ -504,6 +516,7 @@
     <div>
       <h1>💰 Controle Financeiro</h1>
       <p>Anota rapidinho o que entrou ou saiu</p>
+      <span class="versao-badge" id="versaoBadge"></span>
     </div>
     <button class="gear-btn" onclick="abrirModal()">⚙️</button>
   </header>
@@ -604,6 +617,10 @@
 <script>
   // ⚠️ Cole aqui a URL do seu Apps Script (termina em /exec)
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLvqvDgFn-SKJ2LCmYFFReIwTAJJ1oX52Ignsai0Q-AK5PZjUTfoUJYRCI1Cb6EKWF/exec';
+
+  // Versão do app — atualize aqui a cada mudança pra saber o que está em produção
+  const APP_VERSION = '1.1.0';
+  document.getElementById('versaoBadge').textContent = 'v' + APP_VERSION;
 
   const CATEGORIAS_PADRAO = {
     receitas: ['Publi Spot', 'Publi Recorrente', 'Consultoria', 'Gestão de Mídias Sociais', 'Outras Receitas'],
