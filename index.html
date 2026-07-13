@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Nossas Finanças</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F6F3FB;
+    --card: #FFFFFF;
+    --ink: #241F35;
+    --muted: #8B84A0;
+    --receita: #1E9E68;
+    --receita-soft: #E4F6ED;
+    --despesa: #D6336C;
+    --despesa-soft: #FCE7EE;
+    --accent: #6D5DD3;
+    --accent-soft: #ECE8FB;
+    --mode-color: var(--receita);
+    --mode-soft: var(--receita-soft);
+    --radius: 22px;
+    --shadow: 0 12px 30px -12px rgba(36,31,53,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background: var(--bg);
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--ink);
+    display:flex;
+    justify-content:center;
+    padding: 20px 16px 48px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before{
+    content:'';
+    position: fixed;
+    top:-30%; left:50%;
+    width:140vw; height:60vh;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--mode-soft) 0%, transparent 70%);
+    transition: background 0.5s ease;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .app{
+    width:100%;
+    max-width: 460px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 18px;
+    padding: 4px 6px;
+  }
+
+  header h1{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 1.5rem;
+    font-weight:700;
+    margin:0;
+  }
+
+  header p{
+    margin:2px 0 0;
+    color: var(--muted);
+    font-size:0.85rem;
+  }
+
+  .gear-btn{
+    background: var(--card);
+    border:none;
+    border-radius: 14px;
+    width:44px; height:44px;
+    font-size:1.2rem;
+    box-shadow: var(--shadow);
+    cursor:pointer;
+  }
+
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  .toggle-tipo{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    margin-bottom: 22px;
+  }
+
+  .toggle-tipo button{
+    border:2px solid transparent;
+    border-radius: 16px;
+    padding: 16px 8px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:1.05rem;
+    font-weight:700;
+    cursor:pointer;
+    transition: all 0.2s ease;
+    background: #F1EEF8;
+    color: var(--muted);
+  }
+
+  .toggle-tipo button.ativo.receita{
+    background: var(--receita-soft);
+    color: var(--receita);
+    border-color: var(--receita);
+  }
+
+  .toggle-tipo button.ativo.despesa{
+    background: var(--despesa-soft);
+    color: var(--despesa);
+    border-color: var(--despesa);
+  }
+
+  label.rotulo{
+    display:block;
+    font-size:0.8rem;
+    font-weight:700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px 2px;
+  }
+
+  .campo{
+    margin-bottom: 20px;
+  }
+
+  .valor-wrap{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:6px;
+    padding: 14px 0 6px;
+    border-bottom: 2px solid #EEEAF6;
+    margin-bottom: 22px;
+  }
+
+  .valor-wrap span{
+    font-family:'Baloo 2', sans-serif;
+    font-size:1.4rem;
+    color: var(--mode-color);
+    transition: color 0.4s ease;
+  }
+
+  #valorInput{
+    border:none;
+    outline:none;
+    background: transparent;
+    font-family:'Baloo 2', sans-serif;
+    font-size: 2.6rem;
+    font-weight:700;
+    color: var(--mode-color);
+    transition: color 0.4s ease;
+    width: 100%;
+    text-align:center;
+  }
+
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  .chip{
+    border: 2px solid #EEEAF6;
+    background: #FBFAFD;
+    color: var(--ink);
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-weight:600;
+    font-size:0.88rem;
+    cursor:pointer;
+    transition: all 0.15s ease;
+  }
+
+  .chip.selecionado{
+    background: var(--mode-color);
+    border-color: var(--mode-color);
+    color:#fff;
+  }
+
+  .chip.add{
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent-soft);
+  }
+
+  input[type="date"], select, input[type="number"]{
+    width:100%;
+    padding: 13px 14px;
+    border-radius: 14px;
+    border: 2px solid #EEEAF6;
+    font-family:'Nunito Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background:#FBFAFD;
+  }
+
+  .switch-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#FBFAFD;
+    border:2px solid #EEEAF6;
+    border-radius:14px;
+    padding: 14px 16px;
+  }
+
+  .switch-row span{
+    font-weight:700;
+    font-size:0.95rem;
+  }
+
+  .switch{
+    position:relative;
+    width:50px; height:30px;
+    background:#DDD7EC;
+    border-radius:999px;
+    cursor:pointer;
+    transition: background 0.2s ease;
+    flex-shrink:0;
+  }
+
+  .switch.on{ background: var(--accent); }
+
+  .switch .bolinha{
+    position:absolute;
+    top:3px; left:3px;
+    width:24px; height:24px;
+    border-radius:50%;
+    background:#fff;
+    transition: left 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .switch.on .bolinha{ left: 23px; }
+
+  #recorrenciaCampos{
+    display:none;
+    margin-top:14px;
+    gap:14px;
+    flex-direction:column;
+  }
+
+  #recorrenciaCampos.aberto{ display:flex; }
+
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .stepper button{
+    width:42px;height:42px;
+    border-radius:12px;
+    border:2px solid #EEEAF6;
+    background:#FBFAFD;
+    font-size:1.2rem;
+    font-weight:700;
+    color: var(--accent);
+    cursor:pointer;
+  }
+
+  .stepper input{
+    text-align:center;
+    flex:1;
+  }
+
+  #permutaCampo{ display:none; }
+  #permutaCampo.visivel{ display:block; }
+
+  .checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--accent-soft);
+    border-radius:14px;
+    padding: 13px 16px;
+    cursor:pointer;
+  }
+
+  .checkbox-row input{
+    width:20px;height:20px;
+    accent-color: var(--accent);
+  }
+
+  .checkbox-row span{
+    font-weight:700;
+    font-size:0.9rem;
+    color: var(--accent);
+  }
+
+  .btn-salvar{
+    width:100%;
+    padding: 18px;
+    border:none;
+    border-radius:18px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:1.15rem;
+    font-weight:700;
+    color:#fff;
+    background: var(--mode-color);
+    transition: background 0.4s ease, transform 0.1s ease;
+    cursor:pointer;
+    margin-top: 6px;
+  }
+
+  .btn-salvar:active{ transform: scale(0.97); }
+  .btn-salvar:disabled{ opacity:0.6; cursor: default; }
+
+  footer{
+    text-align:center;
+    color: var(--muted);
+    font-size:0.78rem;
+    margin-top:22px;
+  }
+
+  /* Toast de sucesso */
+  #toast{
+    position: fixed;
+    bottom: -120px;
+    left:50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color:#fff;
+    padding: 16px 26px;
+    border-radius: 18px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    transition: bottom 0.4s cubic-bezier(.34,1.56,.64,1);
+    z-index: 50;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  #toast.mostrar{ bottom: 28px; }
+
+  .moeda{
+    display:inline-block;
+    font-size:1.3rem;
+    animation: girar 0.6s ease;
+  }
+
+  @keyframes girar{
+    0%{ transform: rotateY(0deg) scale(0.5); }
+    60%{ transform: rotateY(360deg) scale(1.2); }
+    100%{ transform: rotateY(360deg) scale(1); }
+  }
+
+  /* Modal categorias */
+  .overlay{
+    position:fixed; inset:0;
+    background: rgba(36,31,53,0.45);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index: 40;
+  }
+
+  .overlay.aberto{ display:flex; }
+
+  .modal{
+    background:#fff;
+    width:100%;
+    max-width:460px;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 22px 28px;
+    max-height: 80vh;
+    overflow-y:auto;
+  }
+
+  .modal h2{
+    font-family:'Baloo 2', sans-serif;
+    margin:0 0 16px;
+    font-size:1.3rem;
+  }
+
+  .modal-fechar{
+    float:right;
+    background:#F1EEF8;
+    border:none;
+    width:36px;height:36px;
+    border-radius:10px;
+    font-size:1rem;
+    cursor:pointer;
+  }
+
+  .lista-cat{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:18px;
+  }
+
+  .lista-cat-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#FBFAFD;
+    border-radius:12px;
+    padding: 10px 14px;
+  }
+
+  .lista-cat-item button{
+    border:none;
+    background:none;
+    color: var(--despesa);
+    font-size:0.8rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .nova-cat-form{
+    display:flex;
+    gap:8px;
+  }
+
+  .nova-cat-form input{
+    flex:1;
+    padding: 12px 14px;
+    border-radius:12px;
+    border:2px solid #EEEAF6;
+    background:#FBFAFD;
+  }
+
+  .nova-cat-form button{
+    background: var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding: 0 18px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .aviso-config{
+    background:#FFF6E5;
+    color:#8A6D1F;
+    border-radius:12px;
+    padding: 12px 14px;
+    font-size:0.85rem;
+    margin-bottom:16px;
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>💰 Nossas Finanças</h1>
+      <p>Anota rapidinho o que entrou ou saiu</p>
+    </div>
+    <button class="gear-btn" onclick="abrirModal()">⚙️</button>
+  </header>
+
+  <div class="card">
+    <div id="avisoConfig" class="aviso-config">
+      ⚠️ Configure a URL do Apps Script no código (APPS_SCRIPT_URL) para os lançamentos serem salvos.
+    </div>
+
+    <div class="toggle-tipo">
+      <button id="btnReceita" class="ativo receita" onclick="selecionarTipo('Receita')">🟢 Receita</button>
+      <button id="btnDespesa" class="despesa" onclick="selecionarTipo('Despesa')">🔴 Despesa</button>
+    </div>
+
+    <div class="valor-wrap">
+      <span>R$</span>
+      <input id="valorInput" type="text" inputmode="numeric" placeholder="0,00" oninput="formatarValor(event)">
+    </div>
+
+    <div class="campo">
+      <label class="rotulo">Categoria</label>
+      <div class="chips" id="chipsCategorias"></div>
+    </div>
+
+    <div class="campo">
+      <label class="rotulo">Data</label>
+      <input type="date" id="dataInput">
+    </div>
+
+    <div class="campo" id="permutaCampo">
+      <label class="checkbox-row" for="permutaCheck">
+        <input type="checkbox" id="permutaCheck">
+        <span>🔄 Foi permuta?</span>
+      </label>
+    </div>
+
+    <div class="campo">
+      <div class="switch-row">
+        <span>🔁 Isso se repete?</span>
+        <div class="switch" id="switchRecorrencia" onclick="toggleRecorrencia()">
+          <div class="bolinha"></div>
+        </div>
+      </div>
+
+      <div id="recorrenciaCampos">
+        <div>
+          <label class="rotulo">Quantas vezes se repete</label>
+          <div class="stepper">
+            <button onclick="ajustarRepeticoes(-1)">−</button>
+            <input type="number" id="repeticoesInput" value="12" min="2" max="60" readonly>
+            <button onclick="ajustarRepeticoes(1)">+</button>
+          </div>
+        </div>
+        <div>
+          <label class="rotulo">Frequência</label>
+          <select id="periodicidadeInput">
+            <option value="Mensal" selected>Mensal</option>
+            <option value="Semanal">Semanal</option>
+            <option value="Quinzenal">Quinzenal</option>
+            <option value="Semestral">Semestral</option>
+            <option value="Anual">Anual</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-salvar" id="btnSalvar" onclick="salvarLancamento()">Salvar lançamento</button>
+  </div>
+
+  <footer>feito com carinho pra facilitar sua vida 💜</footer>
+</div>
+
+<div id="toast"><span class="moeda">🪙</span><span id="toastTexto">Lançamento salvo!</span></div>
+
+<div class="overlay" id="overlayModal">
+  <div class="modal">
+    <button class="modal-fechar" onclick="fecharModal()">✕</button>
+    <h2>Categorias</h2>
+
+    <label class="rotulo">Receitas</label>
+    <div class="lista-cat" id="listaReceitas"></div>
+
+    <label class="rotulo">Despesas</label>
+    <div class="lista-cat" id="listaDespesas"></div>
+
+    <label class="rotulo">Adicionar nova categoria</label>
+    <div class="nova-cat-form">
+      <input type="text" id="novaCategoriaNome" placeholder="Nome da categoria">
+      <select id="novaCategoriaTipo">
+        <option value="Receita">Receita</option>
+        <option value="Despesa">Despesa</option>
+      </select>
+      <button onclick="criarCategoria()">+</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ⚠️ Cole aqui a URL do seu Apps Script (termina em /exec)
+  const APPS_SCRIPT_URL = 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT';
+
+  const CATEGORIAS_PADRAO = {
+    receitas: ['Publi Spot', 'Publi Recorrente', 'Consultoria', 'Gestão de Mídias Sociais', 'Outras Receitas'],
+    despesas: ['Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Educação', 'Vestuário', 'Estética', 'Outras Despesas']
+  };
+
+  let categorias = { receitas: [], despesas: [] };
+  let tipoAtual = 'Receita';
+  let categoriaSelecionada = null;
+  let recorrenciaAtiva = false;
+
+  function urlConfigurada() {
+    return APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf('COLE_AQUI') === -1;
+  }
+
+  async function chamarBackend(action, payload) {
+    if (!urlConfigurada()) return { sucesso: false, erro: 'URL não configurada' };
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action }, payload))
+    });
+    return resp.json();
+  }
+
+  async function carregarCategorias() {
+    if (!urlConfigurada()) {
+      categorias = { receitas: CATEGORIAS_PADRAO.receitas.slice(), despesas: CATEGORIAS_PADRAO.despesas.slice() };
+      document.getElementById('avisoConfig').style.display = 'block';
+      renderChips();
+      return;
+    }
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL + '?action=categorias');
+      const dados = await resp.json();
+      categorias = dados;
+    } catch (e) {
+      categorias = { receitas: CATEGORIAS_PADRAO.receitas.slice(), despesas: CATEGORIAS_PADRAO.despesas.slice() };
+    }
+    renderChips();
+  }
+
+  function selecionarTipo(tipo) {
+    tipoAtual = tipo;
+    categoriaSelecionada = null;
+
+    document.getElementById('btnReceita').classList.toggle('ativo', tipo === 'Receita');
+    document.getElementById('btnDespesa').classList.toggle('ativo', tipo === 'Despesa');
+    document.getElementById('permutaCampo').classList.toggle('visivel', tipo === 'Receita');
+
+    document.documentElement.style.setProperty('--mode-color', tipo === 'Receita' ? 'var(--receita)' : 'var(--despesa)');
+    document.documentElement.style.setProperty('--mode-soft', tipo === 'Receita' ? 'var(--receita-soft)' : 'var(--despesa-soft)');
+
+    renderChips();
+  }
+
+  function renderChips() {
+    const lista = tipoAtual === 'Receita' ? categorias.receitas : categorias.despesas;
+    const container = document.getElementById('chipsCategorias');
+    container.innerHTML = '';
+    lista.forEach(function (nome) {
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (nome === categoriaSelecionada ? ' selecionado' : '');
+      chip.textContent = nome;
+      chip.onclick = function () {
+        categoriaSelecionada = nome;
+        renderChips();
+      };
+      container.appendChild(chip);
+    });
+
+    const addChip = document.createElement('button');
+    addChip.className = 'chip add';
+    addChip.textContent = '+ Nova';
+    addChip.onclick = abrirModal;
+    container.appendChild(addChip);
+  }
+
+  function formatarValor(e) {
+    let digitos = e.target.value.replace(/\D/g, '');
+    if (!digitos) { e.target.value = ''; return; }
+    digitos = digitos.replace(/^0+/, '') || '0';
+    while (digitos.length < 3) digitos = '0' + digitos;
+    const centavos = digitos.slice(-2);
+    const inteiro = digitos.slice(0, -2).replace(/^0+(?=\d)/, '');
+    const inteiroFormatado = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    e.target.value = inteiroFormatado + ',' + centavos;
+  }
+
+  function obterValorNumerico() {
+    const bruto = document.getElementById('valorInput').value;
+    if (!bruto) return NaN;
+    return parseFloat(bruto.replace(/\./g, '').replace(',', '.'));
+  }
+
+  function toggleRecorrencia() {
+    recorrenciaAtiva = !recorrenciaAtiva;
+    document.getElementById('switchRecorrencia').classList.toggle('on', recorrenciaAtiva);
+    document.getElementById('recorrenciaCampos').classList.toggle('aberto', recorrenciaAtiva);
+  }
+
+  function ajustarRepeticoes(delta) {
+    const input = document.getElementById('repeticoesInput');
+    let valor = parseInt(input.value, 10) + delta;
+    valor = Math.max(2, Math.min(60, valor));
+    input.value = valor;
+  }
+
+  async function salvarLancamento() {
+    const valor = obterValorNumerico();
+    const data = document.getElementById('dataInput').value;
+
+    if (isNaN(valor) || valor <= 0) { alert('Digite um valor válido 🙂'); return; }
+    if (!categoriaSelecionada) { alert('Escolha uma categoria'); return; }
+    if (!data) { alert('Escolha uma data'); return; }
+
+    const payload = {
+      tipo: tipoAtual,
+      categoria: categoriaSelecionada,
+      valor: valor,
+      data_primeiro_evento: data,
+      recorrente: recorrenciaAtiva,
+      periodicidade: document.getElementById('periodicidadeInput').value,
+      quantidade_repeticoes: parseInt(document.getElementById('repeticoesInput').value, 10),
+      permuta: tipoAtual === 'Receita' ? document.getElementById('permutaCheck').checked : false
+    };
+
+    const btn = document.getElementById('btnSalvar');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    try {
+      const resultado = await chamarBackend('lancar', payload);
+      if (resultado.sucesso) {
+        mostrarToast('Lançamento salvo! 🎉');
+        resetarFormulario();
+      } else {
+        alert('Não consegui salvar: ' + (resultado.erro || 'erro desconhecido'));
+      }
+    } catch (e) {
+      alert('Não consegui conectar. Confira sua internet e tente de novo.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salvar lançamento';
+    }
+  }
+
+  function resetarFormulario() {
+    document.getElementById('valorInput').value = '';
+    document.getElementById('permutaCheck').checked = false;
+    categoriaSelecionada = null;
+    recorrenciaAtiva = false;
+    document.getElementById('switchRecorrencia').classList.remove('on');
+    document.getElementById('recorrenciaCampos').classList.remove('aberto');
+    document.getElementById('repeticoesInput').value = 12;
+    setDataHoje();
+    renderChips();
+    document.getElementById('valorInput').focus();
+  }
+
+  function mostrarToast(texto) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastTexto').textContent = texto;
+    toast.classList.add('mostrar');
+    setTimeout(function () { toast.classList.remove('mostrar'); }, 2200);
+  }
+
+  function setDataHoje() {
+    const hoje = new Date();
+    const iso = hoje.toISOString().slice(0, 10);
+    document.getElementById('dataInput').value = iso;
+  }
+
+  function abrirModal() {
+    renderListaCategorias();
+    document.getElementById('overlayModal').classList.add('aberto');
+  }
+
+  function fecharModal() {
+    document.getElementById('overlayModal').classList.remove('aberto');
+  }
+
+  function renderListaCategorias() {
+    const listaR = document.getElementById('listaReceitas');
+    const listaD = document.getElementById('listaDespesas');
+    listaR.innerHTML = '';
+    listaD.innerHTML = '';
+
+    categorias.receitas.forEach(function (nome) {
+      listaR.appendChild(criarItemLista(nome, 'Receita'));
+    });
+    categorias.despesas.forEach(function (nome) {
+      listaD.appendChild(criarItemLista(nome, 'Despesa'));
+    });
+  }
+
+  function criarItemLista(nome, tipo) {
+    const item = document.createElement('div');
+    item.className = 'lista-cat-item';
+    const span = document.createElement('span');
+    span.textContent = nome;
+    const btn = document.createElement('button');
+    btn.textContent = 'remover';
+    btn.onclick = function () { desativarCategoria(nome, tipo); };
+    item.appendChild(span);
+    item.appendChild(btn);
+    return item;
+  }
+
+  async function criarCategoria() {
+    const nome = document.getElementById('novaCategoriaNome').value.trim();
+    const tipo = document.getElementById('novaCategoriaTipo').value;
+    if (!nome) return;
+
+    const resultado = await chamarBackend('criarCategoria', { nome: nome, tipo: tipo });
+    if (resultado.sucesso) {
+      if (tipo === 'Receita') categorias.receitas.push(nome);
+      else categorias.despesas.push(nome);
+      document.getElementById('novaCategoriaNome').value = '';
+      renderListaCategorias();
+      renderChips();
+    } else {
+      alert(resultado.erro || 'Não consegui criar a categoria.');
+    }
+  }
+
+  async function desativarCategoria(nome, tipo) {
+    const resultado = await chamarBackend('desativarCategoria', { nome: nome, tipo: tipo });
+    if (resultado.sucesso) {
+      if (tipo === 'Receita') categorias.receitas = categorias.receitas.filter(function (n) { return n !== nome; });
+      else categorias.despesas = categorias.despesas.filter(function (n) { return n !== nome; });
+      renderListaCategorias();
+      renderChips();
+    }
+  }
+
+  // Inicialização
+  setDataHoje();
+  carregarCategorias();
+  selecionarTipo('Receita');
+</script>
+
+</body>
+</html>
