@@ -419,15 +419,48 @@
     background:#FBFAFD;
     border-radius:12px;
     padding: 10px 14px;
+    gap: 10px;
   }
 
-  .lista-cat-item button{
+  .lista-cat-item.inativa{
+    opacity: 0.5;
+  }
+
+  .lista-cat-item .nome-cat{
+    flex:1;
+    font-weight:600;
+    font-size:0.92rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .acoes-cat{
+    display:flex;
+    gap:6px;
+    flex-shrink:0;
+  }
+
+  .icone-btn{
     border:none;
-    background:none;
-    color: var(--despesa);
-    font-size:0.8rem;
-    font-weight:700;
+    background:#F1EEF8;
+    width:34px; height:34px;
+    border-radius:10px;
+    font-size:1rem;
     cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .input-edicao-cat{
+    flex:1;
+    padding: 6px 10px;
+    border-radius:8px;
+    border: 2px solid var(--accent);
+    font-family:'Nunito Sans', sans-serif;
+    font-size:0.92rem;
+    font-weight:600;
+    background:#fff;
   }
 
   .nova-cat-form{
@@ -578,6 +611,7 @@
   };
 
   let categorias = { receitas: [], despesas: [] };
+  let categoriasCompletas = { receitas: [], despesas: [] };
   let tipoAtual = 'Receita';
   let categoriaSelecionada = null;
   let recorrenciaAtiva = false;
@@ -745,12 +779,28 @@
   }
 
   function abrirModal() {
-    renderListaCategorias();
+    carregarTodasCategorias().then(renderListaCategorias);
     document.getElementById('overlayModal').classList.add('aberto');
   }
 
   function fecharModal() {
     document.getElementById('overlayModal').classList.remove('aberto');
+  }
+
+  async function carregarTodasCategorias() {
+    if (!urlConfigurada()) {
+      categoriasCompletas = {
+        receitas: CATEGORIAS_PADRAO.receitas.map(function (n) { return { nome: n, ativo: true }; }),
+        despesas: CATEGORIAS_PADRAO.despesas.map(function (n) { return { nome: n, ativo: true }; })
+      };
+      return;
+    }
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL + '?action=todasCategorias');
+      categoriasCompletas = await resp.json();
+    } catch (e) {
+      categoriasCompletas = { receitas: [], despesas: [] };
+    }
   }
 
   function renderListaCategorias() {
@@ -759,25 +809,91 @@
     listaR.innerHTML = '';
     listaD.innerHTML = '';
 
-    categorias.receitas.forEach(function (nome) {
-      listaR.appendChild(criarItemLista(nome, 'Receita'));
+    categoriasCompletas.receitas.forEach(function (item) {
+      listaR.appendChild(criarItemLista(item, 'Receita'));
     });
-    categorias.despesas.forEach(function (nome) {
-      listaD.appendChild(criarItemLista(nome, 'Despesa'));
+    categoriasCompletas.despesas.forEach(function (item) {
+      listaD.appendChild(criarItemLista(item, 'Despesa'));
     });
   }
 
-  function criarItemLista(nome, tipo) {
-    const item = document.createElement('div');
-    item.className = 'lista-cat-item';
-    const span = document.createElement('span');
-    span.textContent = nome;
-    const btn = document.createElement('button');
-    btn.textContent = 'remover';
-    btn.onclick = function () { desativarCategoria(nome, tipo); };
-    item.appendChild(span);
-    item.appendChild(btn);
-    return item;
+  function criarItemLista(item, tipo) {
+    const div = document.createElement('div');
+    div.className = 'lista-cat-item' + (item.ativo ? '' : ' inativa');
+
+    const nomeSpan = document.createElement('span');
+    nomeSpan.className = 'nome-cat';
+    nomeSpan.textContent = item.nome;
+
+    const acoes = document.createElement('div');
+    acoes.className = 'acoes-cat';
+
+    const btnEditar = document.createElement('button');
+    btnEditar.className = 'icone-btn';
+    btnEditar.title = 'Editar nome';
+    btnEditar.textContent = '✏️';
+    btnEditar.onclick = function () { iniciarEdicaoCategoria(div, nomeSpan, item, tipo); };
+
+    const btnStatus = document.createElement('button');
+    btnStatus.className = 'icone-btn';
+    btnStatus.title = item.ativo ? 'Desativar categoria' : 'Ativar categoria';
+    btnStatus.textContent = item.ativo ? '🟢' : '⚪';
+    btnStatus.onclick = function () { alternarStatusCategoria(item, tipo); };
+
+    acoes.appendChild(btnEditar);
+    acoes.appendChild(btnStatus);
+    div.appendChild(nomeSpan);
+    div.appendChild(acoes);
+    return div;
+  }
+
+  function iniciarEdicaoCategoria(div, nomeSpan, item, tipo) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'input-edicao-cat';
+    input.value = item.nome;
+
+    let jaSalvou = false;
+    function confirmar() {
+      if (jaSalvou) return;
+      jaSalvou = true;
+      const novoNome = input.value.trim();
+      if (!novoNome || novoNome === item.nome) {
+        renderListaCategorias();
+        return;
+      }
+      salvarEdicaoCategoria(item.nome, novoNome, tipo);
+    }
+
+    input.onkeydown = function (e) { if (e.key === 'Enter') input.blur(); };
+    input.onblur = confirmar;
+
+    div.replaceChild(input, nomeSpan);
+    input.focus();
+    input.select();
+  }
+
+  async function salvarEdicaoCategoria(nomeAntigo, novoNome, tipo) {
+    const resultado = await chamarBackend('editarCategoria', { nomeAntigo: nomeAntigo, novoNome: novoNome, tipo: tipo });
+    if (resultado.sucesso) {
+      await carregarTodasCategorias();
+      renderListaCategorias();
+      await carregarCategorias();
+    } else {
+      alert(resultado.erro || 'Não consegui editar a categoria.');
+      renderListaCategorias();
+    }
+  }
+
+  async function alternarStatusCategoria(item, tipo) {
+    const resultado = await chamarBackend('alternarStatusCategoria', { nome: item.nome, tipo: tipo });
+    if (resultado.sucesso) {
+      await carregarTodasCategorias();
+      renderListaCategorias();
+      await carregarCategorias();
+    } else {
+      alert(resultado.erro || 'Não consegui atualizar o status.');
+    }
   }
 
   async function criarCategoria() {
@@ -787,23 +903,12 @@
 
     const resultado = await chamarBackend('criarCategoria', { nome: nome, tipo: tipo });
     if (resultado.sucesso) {
-      if (tipo === 'Receita') categorias.receitas.push(nome);
-      else categorias.despesas.push(nome);
       document.getElementById('novaCategoriaNome').value = '';
+      await carregarTodasCategorias();
       renderListaCategorias();
-      renderChips();
+      await carregarCategorias();
     } else {
       alert(resultado.erro || 'Não consegui criar a categoria.');
-    }
-  }
-
-  async function desativarCategoria(nome, tipo) {
-    const resultado = await chamarBackend('desativarCategoria', { nome: nome, tipo: tipo });
-    if (resultado.sucesso) {
-      if (tipo === 'Receita') categorias.receitas = categorias.receitas.filter(function (n) { return n !== nome; });
-      else categorias.despesas = categorias.despesas.filter(function (n) { return n !== nome; });
-      renderListaCategorias();
-      renderChips();
     }
   }
 
